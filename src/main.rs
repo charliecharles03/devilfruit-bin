@@ -1,47 +1,53 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, HttpRequest};
-use awc::Client;
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+fn main() {
+    // Create an event loop
+    let event_loop = EventLoop::new();
+    // Create a window
+    let window = WindowBuilder::new()
+        .with_title("Winit Example")
+        .with_inner_size(winit::dpi::LogicalSize::new(800, 600))
+        .build(&event_loop)
+        .expect("Failed to create window");
+    println!("Window created: {:?}", window);
+    // Run the event loop
+    event_loop.run(move |event, _, control_flow| {
+        // Set control flow to Wait, minimizing CPU usage
+        *control_flow = ControlFlow::Wait;
+        match event {
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => {
+                    println!("Window close requested");
+                    *control_flow = ControlFlow::Exit;
+                }
+                WindowEvent::CursorMoved { position, .. } => {
+                    println!("Mouse moved to: {:?}", position);
+                }
+                WindowEvent::MouseInput { state, button, .. } => {
+                    println!("Mouse button {:?} was {:?}", button, state);
 
-#[post("/getFollowerCount")]
-async fn echo(req_body: String) -> impl Responder {
-    let client = Client::default();
-
-
-    // Perform a GET request to an example URL
-    let url = "http://localhost:8080/hey";
-    let response = client.get(url).send().await;
-
-    match response {
-
-        Ok(mut resp) => {
-            if let Ok(body) = resp.body().await {
-                let body_text = String::from_utf8_lossy(&body);
-                format!("Response: {}", body_text)
-            } else {
-                "Failed to read the response body.".to_string()
+                }
+                WindowEvent::Resized(size) => {
+                    println!("Window resized: {:?}", size);
+                }
+                WindowEvent::KeyboardInput { input, .. } => {
+                    println!("Keyboard input: {:?}", input);
+                }
+                _ => {}
+            },
+            Event::MainEventsCleared => {
+                // Application logic goes here
+                window.request_redraw();
             }
+            Event::RedrawRequested(_) => {
+                // Drawing logic goes here
+                println!("Redrawing the window");
+            }
+            _ => {}
         }
-        Err(e) => format!("Error occurred: {}", e),
-    }
-}
-
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("0")
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    });
 }
