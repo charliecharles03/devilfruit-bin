@@ -3,51 +3,46 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+use vulkano::{
+    command_buffer::allocator::StandardCommandBufferAlloc, device::{Device, DeviceExtensions, Queue}, instance::{Instance, InstanceCreateFlags, InstanceCreateInfo}, swapchain::Surface, VulkanLibrary
+};
+
+use std::{default, error:: Error, sync::Arc};
 
 fn main() {
     // Create an event loop
     let event_loop = EventLoop::new();
-    // Create a window
-    let window = WindowBuilder::new()
-        .with_title("Winit Example")
-        .with_inner_size(winit::dpi::LogicalSize::new(800, 600))
-        .build(&event_loop)
-        .expect("Failed to create window");
-    println!("Window created: {:?}", window);
-    // Run the event loop
-    event_loop.run(move |event, _, control_flow| {
-        // Set control flow to Wait, minimizing CPU usage
-        *control_flow = ControlFlow::Wait;
-        match event {
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::CloseRequested => {
-                    println!("Window close requested");
-                    *control_flow = ControlFlow::Exit;
-                }
-                WindowEvent::CursorMoved { position, .. } => {
-                    println!("Mouse moved to: {:?}", position);
-                }
-                WindowEvent::MouseInput { state, button, .. } => {
-                    println!("Mouse button {:?} was {:?}", button, state);
+    print!("{:?}",event_loop);
+    App::new(&event_loop);
+}
 
-                }
-                WindowEvent::Resized(size) => {
-                    println!("Window resized: {:?}", size);
-                }
-                WindowEvent::KeyboardInput { input, .. } => {
-                    println!("Keyboard input: {:?}", input);
-                }
-                _ => {}
+
+struct App{
+    instance: Arc<Instance>,
+    device: Arc<Device>,
+    queue: Arc<Queue>,
+    command_buffer_allocator: Arc<StandardCommandBufferAlloc>,
+}
+
+
+impl App{
+    fn new(event_loop: &EventLoop<()>){
+        println!("{:?}",event_loop);
+        let library = VulkanLibrary::new().unwrap();
+        let required_extensions = Surface::required_extensions(event_loop);
+
+        let instance = Instance::new(
+            library,
+            InstanceCreateInfo { 
+                flags: InstanceCreateFlags::ENUMERATE_PORTABILITY, 
+                enabled_extensions: required_extensions,
+                ..Default::default()
             },
-            Event::MainEventsCleared => {
-                // Application logic goes here
-                window.request_redraw();
-            }
-            Event::RedrawRequested(_) => {
-                // Drawing logic goes here
-                println!("Redrawing the window");
-            }
-            _ => {}
-        }
-    });
+        ).unwrap();
+
+        let device_extension = DeviceExtensions{
+            khr_swapchain: true,
+            ..DeviceExtensions::empty() };
+    }
+
 }
