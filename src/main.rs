@@ -4,7 +4,7 @@ use winit::{
     window::WindowBuilder,
 };
 use vulkano::{
-    command_buffer::allocator::StandardCommandBufferAlloc, device::{Device, DeviceExtensions, Queue}, instance::{Instance, InstanceCreateFlags, InstanceCreateInfo}, swapchain::Surface, VulkanLibrary
+    command_buffer::allocator::StandardCommandBufferAlloc, device::{Device, DeviceExtensions, Queue, QueueFlags}, instance::{Instance, InstanceCreateFlags, InstanceCreateInfo}, swapchain::Surface, Version, VulkanLibrary
 };
 
 use std::{default, error:: Error, sync::Arc};
@@ -38,11 +38,18 @@ impl App{
                 enabled_extensions: required_extensions,
                 ..Default::default()
             },
-        ).unwrap();
+        )
+        .unwrap();
 
-        let device_extension = DeviceExtensions{
+        let device_extensions = DeviceExtensions{
             khr_swapchain: true,
-            ..DeviceExtensions::empty() };
-    }
+            ..DeviceExtensions::empty() 
+        };
 
+         let res = instance
+            .enumerate_physical_devices()
+            .unwrap().map(|A|{
+                return A.api_version().major;
+            });
+    }
 }
